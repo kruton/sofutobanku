@@ -1,0 +1,16 @@
+VENDOR		SoftBank	22197
+
+BEGIN-VENDOR	SoftBank
+
+ATTRIBUTE	SoftBank-BB-Unit-MAC		1	string
+ATTRIBUTE	SoftBank-BB-Unit-Manufacturer   2	string
+ATTRIBUTE	SoftBank-BB-Unit-Model          3	string
+ATTRIBUTE	SoftBank-BB-Unit-HW-Revision    4	string
+
+ATTRIBUTE	SoftBank-DNS-IPv6-Primary	198	ipv6addr
+ATTRIBUTE	SoftBank-DNS-IPv6-Secondary	199	ipv6addr
+ATTRIBUTE	SoftBank-IPv4-Tunnel-Local-Addr	204	ipaddr
+ATTRIBUTE	SoftBank-IPv4-Tunnel-Endpoint	207	ipv6addr
+ATTRIBUTE	SoftBank-RouteInfo-Server	215	string
+
+END-VENDOR      SoftBank
