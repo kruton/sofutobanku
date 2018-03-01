@@ -18,6 +18,7 @@ desired.
    * Request:
       1. Client ID must be of the DUID-LL (Link Layer) type (see section
          2.4.2.1.4 of [FLETS])
+         * Format is `00:03:00:01:<6-byte MAC address>`
       1. Request should include Prefix Delegation (PD) (see section 2.4.2.1.2
          of [FLETS])
    * Response:
