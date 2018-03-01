@@ -1,6 +1,19 @@
 # sofutobanku
 Setup utility for a certain Hikari provider in Japan
 
+## Linux server setup
+
+This explains a setup that uses the NetworkManager stack to connect to the
+Internet. Distributions like Fedora Linux use this software to control the
+network stack.
+
+* External interface (enp1s0)
+  * dhclient needs to use DUID-LL, but there is no way to tell NetworkManager
+    to use DUID-LL. A workaround is to put the DUID directly into
+    dhclient's lease file `/var/lib/dhclient/dhclient.leases`:
+    ```bash
+    cat /sys/class/net/IFACE/address | awk -Wposix -F: 'BEGIN{printf "default-duid \"\\000\\001\\000\\003"}{for(i=1;i<=NF;i++){printf "\\%03o","0x"$i}}END{print "\";"}' > /var/lib/dhclient/dhclient.leases
+    ```
 ## Normal setup flow
 
 This section discusses the flow needed to fully set up the Internet connection
