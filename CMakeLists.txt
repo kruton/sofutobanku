@@ -1,33 +1,47 @@
-cmake_minimum_required (VERSION 2.6)
-project (SBRadClient)
+cmake_minimum_required(VERSION 3.10)
+project(SBRadClient)
 
-add_library (SBRadLib radius.cc radius.h ip_address.cc ip_address.h)
-add_executable (sbradclient main.cc)
-target_link_libraries (sbradclient SBRadLib)
+add_library(SBRadLib "")
+add_executable(sbradclient "")
+add_executable(sbradclient_tests "")
+include(src/CMakeLists.txt)
 
-find_package (PkgConfig REQUIRED)
+
+#
+# Include nettle for MD5 calculation
+#
+find_package(PkgConfig REQUIRED)
 pkg_search_module(NETTLE REQUIRED nettle)
 
-if (NETTLE_FOUND)
-	include_directories (${NETTLE_INCLUDE_DIRS})
-	message (STATUS "Using nettle ${NETTLE_VERSION}")
-else ()
+if(NETTLE_FOUND)
+	include_directories(${NETTLE_INCLUDE_DIRS})
+	message(STATUS "Using nettle ${NETTLE_VERSION}")
+else()
 	# We should not reach here since nettle is REQUIRED
-endif ()
+endif()
 
-pkg_search_module (RADCLI REQUIRED radcli)
 
-if (RADCLI_FOUND)
-	include_directories (${RADCLI_INCLUDE_DIRS})
-	message (STATUS "Using radcli ${RADCLI_VERSION}")
-else ()
+#
+# Include radcli for RADIUS client
+#
+pkg_search_module(RADCLI REQUIRED radcli)
+
+if(RADCLI_FOUND)
+	include_directories(${RADCLI_INCLUDE_DIRS})
+	message(STATUS "Using radcli ${RADCLI_VERSION}")
+else()
 	# We should not get here since radcli is REQUIRED
-endif ()
+endif()
 
-target_link_libraries (SBRadLib ${NETTLE_LIBRARIES} ${RADCLI_LIBRARIES})
+target_link_libraries(SBRadLib ${NETTLE_LIBRARIES} ${RADCLI_LIBRARIES})
 
-install (TARGETS sbradclient DESTINATION bin)
-install (FILES softbank.dictionary DESTINATION etc)
+install(TARGETS sbradclient DESTINATION bin)
+install(FILES softbank.dictionary DESTINATION etc)
+
+
+#
+# GoogleTest is used for testing functions
+#
 
 # Download and unpack googletest at configure time
 configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
@@ -54,10 +68,9 @@ add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
                  ${CMAKE_BINARY_DIR}/googletest-build
                  EXCLUDE_FROM_ALL)
 
-enable_testing ()
-include (GoogleTest)
-
-add_executable(sbradclient_tests ip_address_tests.cc)
-target_link_libraries(sbradclient_tests SBRadLib gtest_main)
-
+#
+# Setup testing
+#
+enable_testing()
+include(GoogleTest)
 gtest_discover_tests(sbradclient_tests)

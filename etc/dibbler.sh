@@ -1,0 +1,84 @@
+#!/bin/bash
+#
+# This script interprets DHCPv6 vendor options send from NTT for use in
+# configuring the Softbank Hikari connection.
+#
+
+[ -f /etc/sysconfig/sofutobanku ] && . /etc/sysconfig/sofutobanku
+
+LOGFILE=/var/log/dibbler-sofutobanku.log
+
+action="$1"
+
+adddate() {
+    while IFS= read -r line; do
+        printf "%s %s\n" "$(date +"%Y-%m-%d %T")" "$line"
+    done
+}
+
+log() {
+    echo $* | adddate >> $LOGFILE
+}
+
+parse_ntt_config() {
+    local input="$@"
+    for keyval in $input; do
+        local key=${keyval%%=*}
+        local val=${keyval#*=}
+        case $key in
+            vendor)
+                if [[ $val != 210 ]]; then
+                    log "Received vendor extension $val; exiting script..."
+                    return
+                fi
+                ;;
+            201)
+                # MAC address
+                mac_address="$val"
+                ;;
+        esac
+    done
+
+}
+
+setup_local_address() {
+    local ip_address=$1
+    local old_ip_address="$(/sbin/ip -6 addr show dev $IFACE scope global)"
+    /sbin/ip -6 addr replace $ip_address/64 dev $IFACE scope global
+    local new_ip_address="$(/sbin/ip -6 addr show dev $IFACE scope global)"
+    if [[ -z $old_ip_address ]]; then \
+        log "Configured $new_ip_address/64 on interface $IFACE"
+    elif [ $old_ip_address != $new_ip_address ]; then \
+        log "Replaced $old_ip_address on interface $IFACE with new address $new_ip_address/64"
+    fi
+}
+
+connect_tunnel() {
+    local ip_address=$1
+    local mac=$2
+    /home/kenny/git/softubanku/build/sbradclient --username=$ip_address --password=$PASSWORD \
+        --auth-server="$AUTH_SERVER" --shared-secret="$SHARED_SECRET" \
+        --mac=$mac 2> >(adddate >> $LOGFILE) \
+        | read local_ipv4 tunnel_endpoint
+    log "Setting up tunnel to $tunnel_endpoint (local address is $local_ipv4)"
+}
+
+if [[ $action == add || $action == update ]]; then \
+    parse_ntt_config ${SRV_OPTION17}
+
+    if [[ -n $PREFIX1 ]]; then \
+        local_address=${PREFIX1}1111:1111:1111:1111
+        setup_local_address $local_address
+    fi
+
+    if [[ -r $AUTH_SERVER || -z $SHARED_SECRET || -z $PASSWORD ]]; then \
+        log "/etc/sysconfig/sofutobanku must contain AUTH_SERVER, SHARED_SECRET, and PASSWORD; aborting..."
+    elif [[ -n $local_address && -n $mac_address ]]; then \
+        log "Did not receive IPv6 address or MAC address; aborting..."
+    else \
+        log "Trying to connect tunnel for $local_address"
+        connect_tunnel $local_address $mac_address
+    fi
+fi
+
+# vim: set et ts=4 sw=4 sts=4:
