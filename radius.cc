@@ -40,6 +40,9 @@ constexpr int kSbBBManufacturer = 2;
 constexpr int kSbBBModel = 3;
 constexpr int kSbBBHWRev = 4;
 
+constexpr int kSbIPv4LocalAddr = 204;
+constexpr int kSbIPv4TunnelEndpoint = 207;
+
 int radius_transact(const IpAddress &auth_server_ip,
                     const std::string &shared_secret, const IpAddress &username,
                     const std::string &password, const std::string &mac) {
@@ -176,17 +179,35 @@ int radius_transact(const IpAddress &auth_server_ip,
       rc_aaa(rh.get(), 0, send.get(), &received, nullptr, 0, PW_ACCESS_REQUEST);
   if (result == OK_RC) {
     unique_VALUE_PAIR vp(received);
-    char name[128];
-    char value[128];
-    std::cerr << username << " RADIUS Authentication OK" << std::endl;
-    /* print the known attributes in the reply */
-    while (received != nullptr) {
-      if (rc_avpair_tostr(rh.get(), received, name, sizeof(name), value,
-                          sizeof(value)) == 0) {
-        std::cerr << name << '=' << value << std::endl;
-      }
-      received = rc_avpair_next(received);
+
+    VALUE_PAIR *vp_local_address =
+        rc_avpair_get(vp.get(), kSbIPv4LocalAddr, kVendorSoftbank);
+    if (vp_local_address == nullptr) {
+      std::cerr << "Local Address attribute is missing: " << kVendorSoftbank
+                << "/" << kSbIPv4LocalAddr << std::endl;
     }
+
+    VALUE_PAIR *vp_tunnel_endpoint =
+        rc_avpair_get(vp.get(), kSbIPv4TunnelEndpoint, kVendorSoftbank);
+    if (vp_tunnel_endpoint == nullptr) {
+      std::cerr << "Tunnel Endpoint attribute is missing: " << kVendorSoftbank
+                << "/" << kSbIPv4TunnelEndpoint << std::endl;
+    }
+
+    char junk[1];
+    char local_address[INET_ADDRSTRLEN];
+    char tunnel_endpoint[INET6_ADDRSTRLEN];
+
+    if (rc_avpair_tostr(rh.get(), vp_local_address, junk, sizeof(junk),
+                        local_address, sizeof(local_address)) ||
+        rc_avpair_tostr(rh.get(), vp_tunnel_endpoint, junk, sizeof(junk),
+                        tunnel_endpoint, sizeof(tunnel_endpoint))) {
+      std::cerr << "Cannot find Local IPv4 Address or Tunnel Endpoint!"
+                << std::endl;
+      return ERROR_RC;
+    }
+
+    std::cout << local_address << " " << tunnel_endpoint << std::endl;
   } else {
     std::cerr << username << " RADIUS Authentication failure (RC=" << result
               << ")" << std::endl;
