@@ -15,6 +15,7 @@
  */
 
 #include <cstring>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <memory>
@@ -23,8 +24,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#include <openssl/md5.h>
-#include <openssl/rand.h>
+#include <nettle/md5.h>
 #include <radcli/radcli.h>
 
 #include "radius.h"
@@ -107,12 +107,13 @@ int radius_transact(const IpAddress &auth_server_ip,
   // Okay, this is gross, but the API sucks for this.
   VALUE_PAIR *send_raw = send.get();
 
-  std::unique_ptr<uint8_t[]> challenge_bytes(new uint8_t[MD5_DIGEST_LENGTH]);
-  RAND_bytes(challenge_bytes.get(), MD5_DIGEST_LENGTH);
+  std::unique_ptr<char> challenge_bytes(new char[MD5_DIGEST_SIZE]);
+  std::ifstream randin("/dev/urandom");
+  randin.read(challenge_bytes.get(), MD5_DIGEST_SIZE);
+  randin.close();
 
   std::string challenge;
-  challenge.insert(0, reinterpret_cast<const char *>(challenge_bytes.get()),
-                   MD5_DIGEST_LENGTH);
+  challenge.insert(0, challenge_bytes.get(), MD5_DIGEST_SIZE);
   if (rc_avpair_add(rh.get(), &send_raw, PW_CHAP_CHALLENGE, challenge.c_str(),
                     challenge.size(), VENDOR_NONE) == nullptr) {
     std::cerr << "ERROR: cannot add CHAP challenge to packet" << std::endl;
@@ -124,14 +125,17 @@ int radius_transact(const IpAddress &auth_server_ip,
   chap_password += password;
   chap_password += challenge;
 
-  std::unique_ptr<uint8_t[]> hashed_bytes(new uint8_t[MD5_DIGEST_LENGTH]);
-  MD5(reinterpret_cast<const unsigned char *>(chap_password.c_str()),
-      chap_password.size(), hashed_bytes.get());
+  std::unique_ptr<struct md5_ctx> ctx(new struct md5_ctx);
+  md5_init(ctx.get());
+  md5_update(ctx.get(), chap_password.size(),
+             reinterpret_cast<const uint8_t *>(chap_password.c_str()));
+  std::unique_ptr<uint8_t> hashed_bytes(new uint8_t[MD5_DIGEST_SIZE]);
+  md5_digest(ctx.get(), MD5_DIGEST_SIZE, hashed_bytes.get());
 
   std::string response;
   response += '\x01';
   response.insert(1, reinterpret_cast<const char *>(hashed_bytes.get()),
-                  MD5_DIGEST_LENGTH);
+                  MD5_DIGEST_SIZE);
 
   if (rc_avpair_add(rh.get(), &send_raw, PW_CHAP_PASSWORD, response.c_str(),
                     response.size(), VENDOR_NONE) == nullptr) {

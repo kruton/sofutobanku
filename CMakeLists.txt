@@ -6,13 +6,13 @@ add_executable (sbradclient main.cc)
 target_link_libraries (sbradclient SBRadLib)
 
 find_package (PkgConfig REQUIRED)
-pkg_search_module(OPENSSL REQUIRED openssl)
+pkg_search_module(NETTLE REQUIRED nettle)
 
-if (OPENSSL_FOUND)
-	include_directories (${OPENSSL_INCLUDE_DIRS})
-	message (STATUS "Using OpenSSL ${OPENSSL_VERSION}")
+if (NETTLE_FOUND)
+	include_directories (${NETTLE_INCLUDE_DIRS})
+	message (STATUS "Using nettle ${NETTLE_VERSION}")
 else ()
-	# We should not reach here since OpenSSL is REQUIRED
+	# We should not reach here since nettle is REQUIRED
 endif ()
 
 pkg_search_module (RADCLI REQUIRED radcli)
@@ -24,7 +24,7 @@ else ()
 	# We should not get here since radcli is REQUIRED
 endif ()
 
-target_link_libraries (SBRadLib ${OPENSSL_LIBRARIES} ${RADCLI_LIBRARIES})
+target_link_libraries (SBRadLib ${NETTLE_LIBRARIES} ${RADCLI_LIBRARIES})
 
 install (TARGETS sbradclient DESTINATION bin)
 install (FILES softbank.dictionary DESTINATION etc)
