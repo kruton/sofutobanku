@@ -6,6 +6,11 @@ set(PACKAGE sofutobanku)
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION})
 set(VERSION ${VERSION_STRING})
 
+# We require C++11 because of unique_ptr, et al.
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 add_library(SBRadLib "")
 add_executable(sbradclient "")
 add_executable(sbradclient_tests "")
