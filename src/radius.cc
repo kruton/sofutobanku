@@ -27,6 +27,7 @@
 #include <nettle/md5.h>
 #include <radcli/radcli.h>
 
+#include "config.h"
 #include "radius.h"
 
 const std::string kManufacturer = "foxconn";
@@ -93,8 +94,11 @@ int radius_transact(const IpAddress &auth_server_ip,
     return ERROR_RC;
   }
 
-  if (rc_read_dictionary(rh.get(), "dictionary.softbank") != 0) {
-    std::cerr << "ERROR: cannot read SoftBank dictionary" << std::endl;
+  std::string dictionary_dir(SB_CLIENT_SYSCONFDIR);
+  dictionary_dir += "/dictionary.softbank";
+  if (rc_read_dictionary(rh.get(), dictionary_dir.c_str()) != 0) {
+    std::cerr << "ERROR: cannot read SoftBank dictionary from "
+              << dictionary_dir << std::endl;
     return ERROR_RC;
   }
 

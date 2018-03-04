@@ -56,10 +56,9 @@ setup_local_address() {
 connect_tunnel() {
     local ip_address=$1
     local mac=$2
-    /home/kenny/git/softubanku/build/sbradclient --username=$ip_address --password=$PASSWORD \
-        --auth-server="$AUTH_SERVER" --shared-secret="$SHARED_SECRET" \
-        --mac=$mac 2> >(adddate >> $LOGFILE) \
-        | read local_ipv4 tunnel_endpoint
+    read -r local_ipv4 tunnel_endpoint < <(@CMAKE_INSTALL_PREFIX@/sbin/sbradclient \
+        --ip=$ip_address --password=$PASSWORD --auth-server="$AUTH_SERVER" \
+        --shared-secret="$SHARED_SECRET" --mac=$mac 2> >(adddate >> $LOGFILE))
     log "Setting up tunnel to $tunnel_endpoint (local address is $local_ipv4)"
 }
 
@@ -73,7 +72,7 @@ if [[ $action == add || $action == update ]]; then \
 
     if [[ -r $AUTH_SERVER || -z $SHARED_SECRET || -z $PASSWORD ]]; then \
         log "/etc/sysconfig/sofutobanku must contain AUTH_SERVER, SHARED_SECRET, and PASSWORD; aborting..."
-    elif [[ -n $local_address && -n $mac_address ]]; then \
+    elif [[ -z $local_address || -z $mac_address ]]; then \
         log "Did not receive IPv6 address or MAC address; aborting..."
     else \
         log "Trying to connect tunnel for $local_address"
