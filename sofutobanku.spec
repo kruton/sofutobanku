@@ -10,6 +10,7 @@ Url:            https://github.com/kruton/sofutobanku/
 Source:         sofutobanku-1.0.tar.gz
 
 BuildRequires:  cmake >= 3.10
+BuildRequires:  gtest-devel
 BuildRequires:  nettle-devel >= 2.6
 BuildRequires:  radcli-devel
 

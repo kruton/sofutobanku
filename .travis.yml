@@ -6,6 +6,7 @@ language: cpp
 addons:
   apt:
     packages: &base_build
+    - libgtest-dev
     - nettle-dev
     - rpm
 

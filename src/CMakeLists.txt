@@ -22,4 +22,4 @@ target_sources(sbradclient_tests
         "${CMAKE_CURRENT_LIST_DIR}/ip_address_tests.cc"
 )
 
-target_link_libraries(sbradclient_tests SBRadLib gtest_main)
+target_link_libraries(sbradclient_tests SBRadLib gtest_main gtest)
