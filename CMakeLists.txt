@@ -14,7 +14,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_library(SBRadLib "")
 add_executable(sbradclient "")
 add_executable(sbradclient_tests "")
-include(src/CMakeLists.txt)
 
 #
 # Make /usr the default install prefix
@@ -90,6 +89,8 @@ else()
 	# We should not get here since GoogleTest is REQUIRED
 endif()
 
+# Now set up the sources
+include(src/CMakeLists.txt)
 
 #
 # Setup testing

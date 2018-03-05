@@ -67,6 +67,15 @@ install:
     export PATH=$HOME/cmake/bin:$PATH
   - cmake --version
 
+  # Install GoogleTest
+  - |
+    mkdir -p $HOME/tmp/gtest
+    pushd $HOME/tmp/gtest
+    cmake -DCMAKE_CXX_COMPILER=$COMPILER /usr/src/gtest
+    make
+    sudo cp libgtest* /usr/lib/
+    popd
+
 # Build steps
 script:
   - mkdir build
