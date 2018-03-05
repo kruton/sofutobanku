@@ -7,13 +7,39 @@ This explains a setup that uses the NetworkManager stack to connect to the
 Internet. Distributions like Fedora Linux use this software to control the
 network stack.
 
-* External interface (enp1s0)
-  * dhclient needs to use DUID-LL, but there is no way to tell NetworkManager
-    to use DUID-LL. A workaround is to put the DUID directly into
-    dhclient's lease file `/var/lib/dhclient/dhclient.leases`:
-    ```bash
-    cat /sys/class/net/IFACE/address | awk -Wposix -F: 'BEGIN{printf "default-duid \"\\000\\001\\000\\003"}{for(i=1;i<=NF;i++){printf "\\%03o","0x"$i}}END{print "\";"}' > /var/lib/dhclient/dhclient.leases
-    ```
+* External interface
+  * Dibbler is the only DHCPv6 client suitable for our use. Make sure to put
+    the Auth Server, Shared Secret, and Password in `/etc/sysconfig/sofutobanku`.
+    Use the following config file with `<Internet interface>` substituted for
+    the right values for your configuration.
+
+`/etc/dibbler/client.conf`:
+```
+# Dibbler client config for SoftBank Hikari
+duid-type duid-ll
+inactive-mode
+skip-confirm
+log-mode short
+log-level 7
+script "/etc/softubanku/dibbler.sh"
+t1 0
+t2 0
+reconfigure-accept 1
+
+# You can specify downlink interfaces:
+#downlink-prefix-ifaces "eth1", "eth2", "wifi0"
+# Or set it off to manually configure them elsewhere:
+#downlink-prefix-ifaces "none"
+
+iface "<Internet interface>" {
+  pd
+  option dns-server
+  option domain
+  option ntp-server
+  option vendor-spec
+}
+```
+ 
 ## Normal setup flow
 
 This section discusses the flow needed to fully set up the Internet connection
