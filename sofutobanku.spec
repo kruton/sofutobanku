@@ -1,7 +1,7 @@
 Summary:        Utility to setup Internet connection on Softbank Hikari
 Name:           sofutobanku
 Version:        1.0
-Release:        1
+Release:        2
 License:        ASL 2.0
 Group:          System Environment/Base
 Vendor:         Kenny Root
